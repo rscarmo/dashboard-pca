@@ -1,0 +1,5 @@
+1 - Baixar pca pelo PGC e salvar na pasta \dados_pca como formacao_pca.csv. O arquivo virá sem ID PCA.
+2 - Abrir a planilha Dashboard_PCA e baixar todos os IDs do PCA do PNCP com o robô (primeira aba). Salvar um arquivo csv com esses dados na pasta \dados_pca. 
+3 - Atualizar a segunda aba. Ela faz uso do PowerQuery para juntas as informações e acrescentar o campo Valor Total da Contratação (total de todos os itens de mesmo Número de Contratação).
+4 - Salvar o arquivo referente a tabela gerada na segunda aba como pca_dados_final_"ano".csv. Onde "ano" = ano do arquivo PCA baixado do PCNP.
+5 - Atualizamos o GitHub para colocar no ar.
