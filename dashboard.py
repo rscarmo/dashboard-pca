@@ -40,6 +40,14 @@ else:
             sep=","
         )
 
+        # Converte datas serial do Excel para datetime
+        for col in [
+            "Data estimada para o início do processo de contratação",
+            "Data estimada para a conclusão do processo de contratação"
+        ]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], unit="D", origin="1899-12-30", errors="coerce")        
+
         df = df.rename(columns={
             "Data estimada para o início do processo de contratação": "Início Estimado",
             "Data estimada para a conclusão do processo de contratação": "Conclusão Estimada",
@@ -47,6 +55,10 @@ else:
             "Número da contratação": "ID Fut. Contratação",
             "Valor Total Contratação": "Vl. Tot. Contratação",
         })
+
+        for col in ["Início Estimado", "Conclusão Estimada"]:
+            if col in df.columns:
+                df[col] = df[col].dt.strftime("%d/%m/%Y")        
 
         df["Vl. Tot. Contratação"] = df["Vl. Tot. Contratação"].apply(
             lambda x: f"R$ {x:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")

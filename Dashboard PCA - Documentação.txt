@@ -1,5 +1,14 @@
-1 - Baixar pca pelo PGC e salvar na pasta \dados_pca como formacao_pca.csv. O arquivo virá sem ID PCA.
-2 - Abrir a planilha Dashboard_PCA e baixar todos os IDs do PCA do PNCP com o robô (primeira aba). Salvar um arquivo csv com esses dados na pasta \dados_pca. 
+1 - Baixar pca pelo PGC\Formação do PCA e salvar na pasta \dados_pca como formacao_pca.csv. O arquivo virá sem ID PCA.
+2 - Abrir a planilha Dashboard_PCA e baixar todos os IDs do PCA do PNCP com o robô (primeira aba). NÃO ALTERE O CABEÇALHO. Salvar um arquivo csv com esses dados na pasta \dados_pca, com o nome PCA.csv. para atualizar esse arquivo na planilha, é necessário clicar em Dados/Consultas e Conexões. Editar a consulta PCA (aparecerá no canto direito da tela), o Power Query será aberto. Clicar em Atualizar Visualização.
+
+	ATENÇÃO: A extração aqui é "semiautomática", ou seja, é necessário manualmente marcar o "Exibir 50" da página web que o selenium abrir e também colocar no código a linha da planilha a partir da qual o preenchimento deve começar. O ideal é ir debugando e fazendo, pois o robô baixa todos os itens mostrados na tela de forma corrida.
+
 3 - Atualizar a segunda aba. Ela faz uso do PowerQuery para juntas as informações e acrescentar o campo Valor Total da Contratação (total de todos os itens de mesmo Número de Contratação).
 4 - Salvar o arquivo referente a tabela gerada na segunda aba como pca_dados_final_"ano".csv. Onde "ano" = ano do arquivo PCA baixado do PCNP.
+
+	ATENÇÃO: O RuWindows costuma estar configurado para usar ';' como separador, por isso, o Excel teima em salvar os arquivos .csv usando ';'. Precisa alterar essa configuração ou usar algo como:
+	df.to_csv("arquivo.csv", sep=",", index=False, encoding="utf-8")
+
+	Deixei isso pronto no jupyter notebook save_csv.ipynb
+
 5 - Atualizamos o GitHub para colocar no ar.
