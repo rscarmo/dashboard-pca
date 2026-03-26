@@ -21,6 +21,7 @@ if not arquivos:
 else:
     anos = sorted(arquivos.keys())
 
+    # Coloquei o select do ano em uma coluna, assim ele não "domina" a largura toda
     col_ano, _, _ = st.columns([3, 1, 1])
     with col_ano:
         ano_escolhido = st.selectbox(
@@ -39,30 +40,30 @@ else:
             sep=","
         )
 
+        # Converte datas serial do Excel para datetime
         for col in [
             "Data estimada para o início do processo de contratação",
             "Data estimada para a conclusão do processo de contratação"
         ]:
             if col in df.columns:
-                df[col] = pd.to_datetime(df[col], unit="D", origin="1899-12-30", errors="coerce")
+                df[col] = pd.to_datetime(df[col], unit="D", origin="1899-12-30", errors="coerce")        
 
         df = df.rename(columns={
             "Data estimada para o início do processo de contratação": "Início Estimado",
             "Data estimada para a conclusão do processo de contratação": "Conclusão Estimada",
             "ID": "ID PCA",
             "Número da contratação": "ID Fut. Contratação",
-            "Valor PCA": "Vl. Tot. Contratação",
+            # "Valor Total Contratação": "Vl. Tot. Contratação",
+            "Valor PCA": "Vl. Tot. Contratação",            
         })
 
         for col in ["Início Estimado", "Conclusão Estimada"]:
             if col in df.columns:
-                df[col] = df[col].dt.strftime("%d/%m/%Y")
+                df[col] = df[col].dt.strftime("%d/%m/%Y")        
 
-        if "Vl. Tot. Contratação" in df.columns:
-            df["Vl. Tot. Contratação"] = df["Vl. Tot. Contratação"].apply(
-                lambda x: f"R$ {x:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
-                if pd.notnull(x) else ""
-            )
+        df["Vl. Tot. Contratação"] = df["Vl. Tot. Contratação"].apply(
+            lambda x: f"R$ {x:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+        )
 
         colunas_selecionadas = [
             "ID PCA", "ID Fut. Contratação", "Nº DFD", "Nº do Item no DFD",
@@ -70,50 +71,41 @@ else:
             "Início Estimado", "Conclusão Estimada", "Vl. Tot. Contratação",
         ]
 
-        # Garantir comparação consistente
-        for col in ["Nº DFD", "ID Fut. Contratação", "Área requisitante", "Nome Classe/Grupo"]:
-            if col in df.columns:
-                df[col] = df[col].astype(str).str.strip()
+        todos_dfd = sorted(df["Nº DFD"].dropna().unique())
+        todas_areas = sorted(df["Área requisitante"].dropna().unique())
+        todos_grupos = sorted(df["Nome Classe/Grupo"].dropna().unique())
+        
 
-        todos_label = "Todos"
-        todas_label = "Todas"
+        col0, col1, col2 = st.columns(3)
 
-        base_df = df.copy()
+        dfd_selecionado = col0.selectbox("Nº DFD", options=["Todos"] + todos_dfd)
 
-        col0, col1, col2, col3 = st.columns(4)
+        if dfd_selecionado != "Todos":
+            filtro_df = df[df["Nº DFD"] == dfd_selecionado]
+            area_selecionada = "Todas"
+            grupo_selecionado = "Todos"
+        else:
+            area_selecionada = col1.selectbox("Área Requisitante", options=["Todas"] + todas_areas)
 
-        # 1) Nº DFD
-        opcoes_dfd = [todos_label] + sorted(base_df["Nº DFD"].dropna().unique().tolist())
-        dfd_selecionado = col0.selectbox("Nº DFD", options=opcoes_dfd)
+            if area_selecionada != "Todas":
+                grupos_filtrados = sorted(
+                    df[df["Área requisitante"] == area_selecionada]["Nome Classe/Grupo"]
+                    .dropna()
+                    .unique()
+                )
+            else:
+                grupos_filtrados = todos_grupos
 
-        df1 = base_df.copy()
-        if dfd_selecionado != todos_label:
-            df1 = df1[df1["Nº DFD"] == dfd_selecionado]
+            grupo_selecionado = col2.selectbox("Nome Classe/Grupo", options=["Todos"] + grupos_filtrados)
 
-        # 2) ID Fut. Contratação
-        opcoes_id_fut = [todos_label] + sorted(df1["ID Fut. Contratação"].dropna().unique().tolist())
-        id_fut_selecionado = col1.selectbox("ID Fut. Contratação", options=opcoes_id_fut)
+            filtro_df = df.copy()
+            if area_selecionada != "Todas":
+                filtro_df = filtro_df[filtro_df["Área requisitante"] == area_selecionada]
+            if grupo_selecionado != "Todos":
+                filtro_df = filtro_df[filtro_df["Nome Classe/Grupo"] == grupo_selecionado]
 
-        df2 = df1.copy()
-        if id_fut_selecionado != todos_label:
-            df2 = df2[df2["ID Fut. Contratação"] == id_fut_selecionado]
-
-        # 3) Área Requisitante
-        opcoes_area = [todas_label] + sorted(df2["Área requisitante"].dropna().unique().tolist())
-        area_selecionada = col2.selectbox("Área Requisitante", options=opcoes_area)
-
-        df3 = df2.copy()
-        if area_selecionada != todas_label:
-            df3 = df3[df3["Área requisitante"] == area_selecionada]
-
-        # 4) Nome Classe/Grupo
-        opcoes_grupo = [todos_label] + sorted(df3["Nome Classe/Grupo"].dropna().unique().tolist())
-        grupo_selecionado = col3.selectbox("Nome Classe/Grupo", options=opcoes_grupo)
-
-        filtro_df = df3.copy()
-        if grupo_selecionado != todos_label:
-            filtro_df = filtro_df[filtro_df["Nome Classe/Grupo"] == grupo_selecionado]
-
+        # ======= AQUI É A PARTE CRÍTICA =======
+        # use_container_width=True + column_config deixando as colunas "pequenas"
         st.dataframe(
             filtro_df[colunas_selecionadas],
             use_container_width=True,
@@ -125,7 +117,10 @@ else:
                 "Nº do Item no DFD": st.column_config.TextColumn(width="small"),
                 "Área requisitante": st.column_config.TextColumn(width="small", max_chars=22),
                 "Código Classe/Grupo": st.column_config.TextColumn(width="small"),
-                "Nome Classe/Grupo": st.column_config.TextColumn(width="medium", max_chars=40),
+                "Nome Classe/Grupo": st.column_config.TextColumn(
+                    width="medium",  # ou "small" se quiser mais apertado ainda
+                    max_chars=40
+                ),
                 "Início Estimado": st.column_config.TextColumn(width="small"),
                 "Conclusão Estimada": st.column_config.TextColumn(width="small"),
                 "Vl. Tot. Contratação": st.column_config.TextColumn(width="small"),
